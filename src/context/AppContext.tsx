@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, testConnection } from '../lib/supabase';
 
 export interface Person {
   id: string;
@@ -72,10 +72,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [groups, setGroups] = useState<Group[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
+        // Test Supabase connection first
+        await testConnection();
+
         // Load people
         const { data: peopleData, error: peopleError } = await supabase
           .from('people')
@@ -136,6 +140,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setLocations(formattedLocations);
       } catch (error) {
         console.error('Error loading data:', error);
+        setError(error as Error);
       }
     };
 
@@ -421,7 +426,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removeLocation
       }}
     >
-      {children}
+      {error ? (
+        <div className="fixed inset-0 flex items-center justify-center bg-red-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md">
+            <h2 className="text-red-600 text-xl font-bold mb-4">Connection Error</h2>
+            <p className="text-gray-700 mb-4">
+              Failed to connect to the database. Please check your Supabase configuration and ensure:
+            </p>
+            <ul className="list-disc list-inside text-gray-600 mb-4">
+              <li>Your .env file contains valid Supabase credentials</li>
+              <li>VITE_SUPABASE_URL is correctly set</li>
+              <li>VITE_SUPABASE_ANON_KEY is correctly set</li>
+              <li>Your internet connection is working</li>
+            </ul>
+            <p className="text-gray-700">Error details: {error.message}</p>
+          </div>
+        </div>
+      ) : (
+        children
+      )}
     </AppContext.Provider>
   );
 };
