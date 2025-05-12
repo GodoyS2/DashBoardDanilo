@@ -48,6 +48,7 @@ interface AppContextType {
   addLocation: (location: Location) => Promise<void>;
   updateLocation: (location: Location) => Promise<void>;
   removeLocation: (id: string) => Promise<void>;
+  retryConnection: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType>({
@@ -64,7 +65,8 @@ const AppContext = createContext<AppContextType>({
   removeGroup: async () => {},
   addLocation: async () => {},
   updateLocation: async () => {},
-  removeLocation: async () => {}
+  removeLocation: async () => {},
+  retryConnection: async () => {}
 });
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -74,78 +76,82 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<Error | null>(null);
 
+  const loadData = async () => {
+    try {
+      setError(null);
+      await testConnection();
+
+      // Load people
+      const { data: peopleData, error: peopleError } = await supabase
+        .from('people')
+        .select('*');
+      if (peopleError) throw peopleError;
+      setPeople(peopleData || []);
+
+      // Load groups with members
+      const { data: groupsData, error: groupsError } = await supabase
+        .from('groups')
+        .select(`
+          *,
+          group_members (
+            person_id
+          )
+        `);
+      if (groupsError) throw groupsError;
+      
+      const formattedGroups = groupsData?.map(group => ({
+        id: group.id,
+        name: group.name,
+        description: group.description,
+        avatar: group.avatar,
+        members: group.group_members.map((m: any) => m.person_id),
+        updatedAt: new Date(group.updated_at).getTime()
+      })) || [];
+      setGroups(formattedGroups);
+
+      // Load locations with assignments
+      const { data: locationsData, error: locationsError } = await supabase
+        .from('locations')
+        .select(`
+          *,
+          location_assignments (
+            group_id,
+            person_id
+          )
+        `);
+      if (locationsError) throw locationsError;
+      
+      const formattedLocations = locationsData?.map(location => ({
+        id: location.id,
+        name: location.name,
+        address: location.address,
+        visited: location.visited,
+        coordinates: {
+          lat: location.lat,
+          lng: location.lng
+        },
+        assignedGroups: location.location_assignments
+          .filter((a: any) => a.group_id)
+          .map((a: any) => a.group_id),
+        assignedPeople: location.location_assignments
+          .filter((a: any) => a.person_id)
+          .map((a: any) => a.person_id),
+        updatedAt: new Date(location.updated_at).getTime()
+      })) || [];
+      setLocations(formattedLocations);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      setError(error as Error);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Test Supabase connection first
-        await testConnection();
-
-        // Load people
-        const { data: peopleData, error: peopleError } = await supabase
-          .from('people')
-          .select('*');
-        if (peopleError) throw peopleError;
-        setPeople(peopleData || []);
-
-        // Load groups with members
-        const { data: groupsData, error: groupsError } = await supabase
-          .from('groups')
-          .select(`
-            *,
-            group_members (
-              person_id
-            )
-          `);
-        if (groupsError) throw groupsError;
-        
-        const formattedGroups = groupsData?.map(group => ({
-          id: group.id,
-          name: group.name,
-          description: group.description,
-          avatar: group.avatar,
-          members: group.group_members.map((m: any) => m.person_id),
-          updatedAt: new Date(group.updated_at).getTime()
-        })) || [];
-        setGroups(formattedGroups);
-
-        // Load locations with assignments
-        const { data: locationsData, error: locationsError } = await supabase
-          .from('locations')
-          .select(`
-            *,
-            location_assignments (
-              group_id,
-              person_id
-            )
-          `);
-        if (locationsError) throw locationsError;
-        
-        const formattedLocations = locationsData?.map(location => ({
-          id: location.id,
-          name: location.name,
-          address: location.address,
-          visited: location.visited,
-          coordinates: {
-            lat: location.lat,
-            lng: location.lng
-          },
-          assignedGroups: location.location_assignments
-            .filter((a: any) => a.group_id)
-            .map((a: any) => a.group_id),
-          assignedPeople: location.location_assignments
-            .filter((a: any) => a.person_id)
-            .map((a: any) => a.person_id),
-          updatedAt: new Date(location.updated_at).getTime()
-        })) || [];
-        setLocations(formattedLocations);
-      } catch (error) {
-        console.error('Error loading data:', error);
-        setError(error as Error);
-      }
-    };
-
     loadData();
   }, []);
+
+  const retryConnection = async () => {
+    await loadData();
+  };
 
   const addPerson = async (person: Person) => {
     try {
@@ -423,7 +429,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removeGroup,
         addLocation,
         updateLocation,
-        removeLocation
+        removeLocation,
+        retryConnection
       }}
     >
       {error ? (
@@ -439,7 +446,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               <li>VITE_SUPABASE_ANON_KEY is correctly set</li>
               <li>Your internet connection is working</li>
             </ul>
-            <p className="text-gray-700">Error details: {error.message}</p>
+            <p className="text-gray-700 mb-4">Error details: {error.message}</p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+              >
+                Refresh Page
+              </button>
+              <button
+                onClick={retryConnection}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              >
+                Retry Connection
+              </button>
+            </div>
           </div>
         </div>
       ) : (
