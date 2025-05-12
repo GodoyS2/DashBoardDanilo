@@ -148,10 +148,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addPerson = async (person: Person) => {
     try {
+      // Let Supabase generate the UUID using gen_random_uuid()
       const { data, error } = await supabase
         .from('people')
         .insert([{
-          id: person.id,
           name: person.name,
           email: person.email,
           phone: person.phone,
@@ -165,6 +165,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setPeople(prev => [...prev, data]);
     } catch (error) {
       console.error('Error adding person:', error);
+      throw error; // Re-throw to handle in the UI
     }
   };
 
@@ -185,6 +186,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setPeople(prev => prev.map(p => p.id === person.id ? person : p));
     } catch (error) {
       console.error('Error updating person:', error);
+      throw error;
     }
   };
 
@@ -205,6 +207,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })));
     } catch (error) {
       console.error('Error removing person:', error);
+      throw error;
     }
   };
 
@@ -214,7 +217,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const { data: groupData, error: groupError } = await supabase
         .from('groups')
         .insert([{
-          id: group.id,
           name: group.name,
           description: group.description,
           avatar: group.avatar
@@ -238,9 +240,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (membersError) throw membersError;
       }
 
-      setGroups(prev => [...prev, group]);
+      setGroups(prev => [...prev, { ...group, id: groupData.id }]);
     } catch (error) {
       console.error('Error adding group:', error);
+      throw error;
     }
   };
 
@@ -283,6 +286,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setGroups(prev => prev.map(g => g.id === group.id ? group : g));
     } catch (error) {
       console.error('Error updating group:', error);
+      throw error;
     }
   };
 
@@ -297,6 +301,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setGroups(prev => prev.filter(g => g.id !== id));
     } catch (error) {
       console.error('Error removing group:', error);
+      throw error;
     }
   };
 
@@ -306,7 +311,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const { data: locationData, error: locationError } = await supabase
         .from('locations')
         .insert([{
-          id: location.id,
           name: location.name,
           address: location.address,
           visited: location.visited,
@@ -340,9 +344,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (assignError) throw assignError;
       }
 
-      setLocations(prev => [...prev, location]);
+      setLocations(prev => [...prev, { ...location, id: locationData.id }]);
     } catch (error) {
       console.error('Error adding location:', error);
+      throw error;
     }
   };
 
@@ -395,6 +400,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setLocations(prev => prev.map(l => l.id === location.id ? location : l));
     } catch (error) {
       console.error('Error updating location:', error);
+      throw error;
     }
   };
 
@@ -409,6 +415,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setLocations(prev => prev.filter(l => l.id !== id));
     } catch (error) {
       console.error('Error removing location:', error);
+      throw error;
     }
   };
 
