@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import React, { createContext, useContext, useState } from 'react';
 
 export interface Person {
   id: string;
@@ -39,15 +38,15 @@ interface AppContextType {
   locations: Location[];
   searchTerm: string;
   setSearchTerm: (term: string) => void;
-  addPerson: (person: Person) => Promise<void>;
-  updatePerson: (person: Person) => Promise<void>;
-  removePerson: (id: string) => Promise<void>;
-  addGroup: (group: Group) => Promise<void>;
-  updateGroup: (group: Group) => Promise<void>;
-  removeGroup: (id: string) => Promise<void>;
-  addLocation: (location: Location) => Promise<void>;
-  updateLocation: (location: Location) => Promise<void>;
-  removeLocation: (id: string) => Promise<void>;
+  addPerson: (person: Person) => void;
+  updatePerson: (person: Person) => void;
+  removePerson: (id: string) => void;
+  addGroup: (group: Group) => void;
+  updateGroup: (group: Group) => void;
+  removeGroup: (id: string) => void;
+  addLocation: (location: Location) => void;
+  updateLocation: (location: Location) => void;
+  removeLocation: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextType>({
@@ -56,15 +55,15 @@ const AppContext = createContext<AppContextType>({
   locations: [],
   searchTerm: '',
   setSearchTerm: () => {},
-  addPerson: async () => {},
-  updatePerson: async () => {},
-  removePerson: async () => {},
-  addGroup: async () => {},
-  updateGroup: async () => {},
-  removeGroup: async () => {},
-  addLocation: async () => {},
-  updateLocation: async () => {},
-  removeLocation: async () => {}
+  addPerson: () => {},
+  updatePerson: () => {},
+  removePerson: () => {},
+  addGroup: () => {},
+  updateGroup: () => {},
+  removeGroup: () => {},
+  addLocation: () => {},
+  updateLocation: () => {},
+  removeLocation: () => {}
 });
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -72,361 +71,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [groups, setGroups] = useState<Group[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initial data load
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Load people
-        const { data: peopleData, error: peopleError } = await supabase
-          .from('people')
-          .select('*');
-        if (peopleError) throw peopleError;
-        setPeople(peopleData || []);
-
-        // Load groups with members
-        const { data: groupsData, error: groupsError } = await supabase
-          .from('groups')
-          .select(`
-            *,
-            group_members (
-              person_id
-            )
-          `);
-        if (groupsError) throw groupsError;
-        
-        const formattedGroups = groupsData?.map(group => ({
-          id: group.id,
-          name: group.name,
-          description: group.description,
-          avatar: group.avatar,
-          members: group.group_members.map((m: any) => m.person_id),
-          updatedAt: new Date(group.updated_at).getTime()
-        })) || [];
-        setGroups(formattedGroups);
-
-        // Load locations with assignments
-        const { data: locationsData, error: locationsError } = await supabase
-          .from('locations')
-          .select(`
-            *,
-            location_assignments (
-              group_id,
-              person_id
-            )
-          `);
-        if (locationsError) throw locationsError;
-        
-        const formattedLocations = locationsData?.map(location => ({
-          id: location.id,
-          name: location.name,
-          address: location.address,
-          visited: location.visited,
-          coordinates: {
-            lat: location.lat,
-            lng: location.lng
-          },
-          assignedGroups: location.location_assignments
-            .filter((a: any) => a.group_id)
-            .map((a: any) => a.group_id),
-          assignedPeople: location.location_assignments
-            .filter((a: any) => a.person_id)
-            .map((a: any) => a.person_id),
-          updatedAt: new Date(location.updated_at).getTime()
-        })) || [];
-        setLocations(formattedLocations);
-
-        setIsInitialized(true);
-      } catch (error) {
-        console.error('Error loading data:', error);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  const addPerson = async (person: Person) => {
-    try {
-      // Let Supabase generate the UUID using gen_random_uuid()
-      const { data, error } = await supabase
-        .from('people')
-        .insert([{
-          name: person.name,
-          email: person.email,
-          phone: person.phone,
-          bio: person.bio,
-          avatar: person.avatar
-        }])
-        .select()
-        .single();
-      
-      if (error) throw error;
-      setPeople(prev => [...prev, data]);
-    } catch (error) {
-      console.error('Error adding person:', error);
-      throw error; // Re-throw to handle in the UI
-    }
+  const addPerson = (person: Person) => {
+    setPeople(prev => [...prev, person]);
   };
 
-  const updatePerson = async (person: Person) => {
-    try {
-      const { error } = await supabase
-        .from('people')
-        .update({
-          name: person.name,
-          email: person.email,
-          phone: person.phone,
-          bio: person.bio,
-          avatar: person.avatar
-        })
-        .eq('id', person.id);
-      
-      if (error) throw error;
-      setPeople(prev => prev.map(p => p.id === person.id ? person : p));
-    } catch (error) {
-      console.error('Error updating person:', error);
-      throw error;
-    }
+  const updatePerson = (person: Person) => {
+    setPeople(prev => prev.map(p => p.id === person.id ? person : p));
   };
 
-  const removePerson = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('people')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      setPeople(prev => prev.filter(p => p.id !== id));
-      
-      // Update groups that had this person as a member
-      setGroups(prev => prev.map(group => ({
-        ...group,
-        members: group.members.filter(memberId => memberId !== id)
-      })));
-    } catch (error) {
-      console.error('Error removing person:', error);
-      throw error;
-    }
+  const removePerson = (id: string) => {
+    setPeople(prev => prev.filter(p => p.id !== id));
+    setGroups(prev => prev.map(group => ({
+      ...group,
+      members: group.members.filter(memberId => memberId !== id)
+    })));
   };
 
-  const addGroup = async (group: Group) => {
-    try {
-      // Insert group
-      const { data: groupData, error: groupError } = await supabase
-        .from('groups')
-        .insert([{
-          name: group.name,
-          description: group.description,
-          avatar: group.avatar
-        }])
-        .select()
-        .single();
-      
-      if (groupError) throw groupError;
-
-      // Filter out any member IDs that don't exist in the people table
-      const validMembers = group.members.filter(memberId => 
-        people.some(person => person.id === memberId)
-      );
-
-      // Insert group members
-      if (validMembers.length > 0) {
-        const { error: membersError } = await supabase
-          .from('group_members')
-          .insert(
-            validMembers.map(personId => ({
-              group_id: groupData.id,
-              person_id: personId
-            }))
-          );
-        
-        if (membersError) throw membersError;
-      }
-
-      setGroups(prev => [...prev, { ...group, id: groupData.id, members: validMembers }]);
-    } catch (error) {
-      console.error('Error adding group:', error);
-      throw error;
-    }
+  const addGroup = (group: Group) => {
+    setGroups(prev => [...prev, group]);
   };
 
-  const updateGroup = async (group: Group) => {
-    try {
-      // Update group
-      const { error: groupError } = await supabase
-        .from('groups')
-        .update({
-          name: group.name,
-          description: group.description,
-          avatar: group.avatar
-        })
-        .eq('id', group.id);
-      
-      if (groupError) throw groupError;
-
-      // Delete existing members
-      const { error: deleteError } = await supabase
-        .from('group_members')
-        .delete()
-        .eq('group_id', group.id);
-      
-      if (deleteError) throw deleteError;
-
-      // Filter out any member IDs that don't exist in the people table
-      const validMembers = group.members.filter(memberId => 
-        people.some(person => person.id === memberId)
-      );
-
-      // Insert new members
-      if (validMembers.length > 0) {
-        const { error: membersError } = await supabase
-          .from('group_members')
-          .insert(
-            validMembers.map(personId => ({
-              group_id: group.id,
-              person_id: personId
-            }))
-          );
-        
-        if (membersError) throw membersError;
-      }
-
-      setGroups(prev => prev.map(g => g.id === group.id ? { ...group, members: validMembers } : g));
-    } catch (error) {
-      console.error('Error updating group:', error);
-      throw error;
-    }
+  const updateGroup = (group: Group) => {
+    setGroups(prev => prev.map(g => g.id === group.id ? group : g));
   };
 
-  const removeGroup = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('groups')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      setGroups(prev => prev.filter(g => g.id !== id));
-    } catch (error) {
-      console.error('Error removing group:', error);
-      throw error;
-    }
+  const removeGroup = (id: string) => {
+    setGroups(prev => prev.filter(g => g.id !== id));
   };
 
-  const addLocation = async (location: Location) => {
-    try {
-      // Insert location
-      const { data: locationData, error: locationError } = await supabase
-        .from('locations')
-        .insert([{
-          name: location.name,
-          address: location.address,
-          visited: location.visited,
-          lat: location.coordinates.lat,
-          lng: location.coordinates.lng
-        }])
-        .select()
-        .single();
-      
-      if (locationError) throw locationError;
-
-      // Insert assignments
-      const assignments = [
-        ...location.assignedGroups.map(groupId => ({
-          location_id: locationData.id,
-          group_id: groupId,
-          person_id: null
-        })),
-        ...location.assignedPeople.map(personId => ({
-          location_id: locationData.id,
-          group_id: null,
-          person_id: personId
-        }))
-      ];
-
-      if (assignments.length > 0) {
-        const { error: assignError } = await supabase
-          .from('location_assignments')
-          .insert(assignments);
-        
-        if (assignError) throw assignError;
-      }
-
-      setLocations(prev => [...prev, { ...location, id: locationData.id }]);
-    } catch (error) {
-      console.error('Error adding location:', error);
-      throw error;
-    }
+  const addLocation = (location: Location) => {
+    setLocations(prev => [...prev, location]);
   };
 
-  const updateLocation = async (location: Location) => {
-    try {
-      // Update location
-      const { error: locationError } = await supabase
-        .from('locations')
-        .update({
-          name: location.name,
-          address: location.address,
-          visited: location.visited,
-          lat: location.coordinates.lat,
-          lng: location.coordinates.lng
-        })
-        .eq('id', location.id);
-      
-      if (locationError) throw locationError;
-
-      // Delete existing assignments
-      const { error: deleteError } = await supabase
-        .from('location_assignments')
-        .delete()
-        .eq('location_id', location.id);
-      
-      if (deleteError) throw deleteError;
-
-      // Insert new assignments
-      const assignments = [
-        ...location.assignedGroups.map(groupId => ({
-          location_id: location.id,
-          group_id: groupId,
-          person_id: null
-        })),
-        ...location.assignedPeople.map(personId => ({
-          location_id: location.id,
-          group_id: null,
-          person_id: personId
-        }))
-      ];
-
-      if (assignments.length > 0) {
-        const { error: assignError } = await supabase
-          .from('location_assignments')
-          .insert(assignments);
-        
-        if (assignError) throw assignError;
-      }
-
-      setLocations(prev => prev.map(l => l.id === location.id ? location : l));
-    } catch (error) {
-      console.error('Error updating location:', error);
-      throw error;
-    }
+  const updateLocation = (location: Location) => {
+    setLocations(prev => prev.map(l => l.id === location.id ? location : l));
   };
 
-  const removeLocation = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('locations')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      setLocations(prev => prev.filter(l => l.id !== id));
-    } catch (error) {
-      console.error('Error removing location:', error);
-      throw error;
-    }
+  const removeLocation = (id: string) => {
+    setLocations(prev => prev.filter(l => l.id !== id));
   };
 
   return (
