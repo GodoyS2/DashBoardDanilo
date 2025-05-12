@@ -73,10 +73,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [locations, setLocations] = useState<Location[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
+        setIsLoading(true);
+        setError(null);
+        
         // Test Supabase connection first
         await testConnection();
 
@@ -141,10 +145,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch (error) {
         console.error('Error loading data:', error);
         setError(error as Error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadData();
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+      if (event === 'SIGNED_OUT') {
+        setPeople([]);
+        setGroups([]);
+        setLocations([]);
+      } else if (event === 'SIGNED_IN') {
+        loadData();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const addPerson = async (person: Person) => {
@@ -406,6 +427,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       throw error;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+          <p className="text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AppContext.Provider
