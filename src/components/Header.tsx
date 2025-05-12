@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Menu, Bell, Search, User } from 'lucide-react';
+import React from 'react';
+import { Menu, Search } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 interface HeaderProps {
@@ -43,21 +43,8 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
             </div>
           </div>
 
-          {/* Right: Actions */}
-          <div className="flex items-center space-x-3">
-            <button
-              className="p-2 text-gray-500 rounded-full hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
-              aria-label="Notificações"
-            >
-              <Bell className="w-6 h-6" />
-            </button>
-            <button
-              className="p-2 text-gray-500 rounded-full hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
-              aria-label="Perfil do usuário"
-            >
-              <User className="w-6 h-6" />
-            </button>
-          </div>
+          {/* Right: Placeholder for spacing */}
+          <div className="w-6 lg:w-12"></div>
         </div>
       </div>
     </header>
