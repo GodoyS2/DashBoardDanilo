@@ -3,37 +3,29 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Enhanced validation for Supabase credentials
-if (!supabaseUrl) {
-  throw new Error('Missing Supabase URL. Please ensure VITE_SUPABASE_URL is set in your .env file');
-}
-
-if (!supabaseAnonKey) {
-  throw new Error('Missing Supabase Anon Key. Please ensure VITE_SUPABASE_ANON_KEY is set in your .env file');
-}
-
-// Validate URL format
-try {
-  new URL(supabaseUrl);
-} catch (error) {
-  throw new Error('Invalid Supabase URL format. Please check your VITE_SUPABASE_URL value');
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Please click the "Connect to Supabase" button in the top right to set up your database connection.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true
   },
+  global: {
+    headers: { 'x-application-name': 'dashmanager' }
+  }
 });
 
-// Test connection
-export const testConnection = async () => {
+// Helper to check Supabase connection
+export const checkSupabaseConnection = async () => {
   try {
-    const { error } = await supabase.from('people').select('count', { count: 'exact', head: true });
+    const { data, error } = await supabase.from('people').select('count').single();
     if (error) throw error;
-    console.log('Successfully connected to Supabase');
+    return true;
   } catch (error) {
-    console.error('Failed to connect to Supabase:', error);
-    throw error;
+    console.error('Supabase connection error:', error);
+    return false;
   }
 };
