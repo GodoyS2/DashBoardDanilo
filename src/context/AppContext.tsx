@@ -226,12 +226,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       
       if (groupError) throw groupError;
 
+      // Filter out any member IDs that don't exist in the people table
+      const validMembers = group.members.filter(memberId => 
+        people.some(person => person.id === memberId)
+      );
+
       // Insert group members
-      if (group.members.length > 0) {
+      if (validMembers.length > 0) {
         const { error: membersError } = await supabase
           .from('group_members')
           .insert(
-            group.members.map(personId => ({
+            validMembers.map(personId => ({
               group_id: groupData.id,
               person_id: personId
             }))
@@ -240,7 +245,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (membersError) throw membersError;
       }
 
-      setGroups(prev => [...prev, { ...group, id: groupData.id }]);
+      setGroups(prev => [...prev, { ...group, id: groupData.id, members: validMembers }]);
     } catch (error) {
       console.error('Error adding group:', error);
       throw error;
@@ -269,12 +274,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       
       if (deleteError) throw deleteError;
 
+      // Filter out any member IDs that don't exist in the people table
+      const validMembers = group.members.filter(memberId => 
+        people.some(person => person.id === memberId)
+      );
+
       // Insert new members
-      if (group.members.length > 0) {
+      if (validMembers.length > 0) {
         const { error: membersError } = await supabase
           .from('group_members')
           .insert(
-            group.members.map(personId => ({
+            validMembers.map(personId => ({
               group_id: group.id,
               person_id: personId
             }))
@@ -283,7 +293,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (membersError) throw membersError;
       }
 
-      setGroups(prev => prev.map(g => g.id === group.id ? group : g));
+      setGroups(prev => prev.map(g => g.id === group.id ? { ...group, members: validMembers } : g));
     } catch (error) {
       console.error('Error updating group:', error);
       throw error;
