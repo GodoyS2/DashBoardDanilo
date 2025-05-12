@@ -6,7 +6,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase credentials. Please click the "Connect to Supabase" button in the top right to set up your database connection.');
 }
-
+console.log("SUPABASE URL:", import.meta.env.VITE_SUPABASE_URL);
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
