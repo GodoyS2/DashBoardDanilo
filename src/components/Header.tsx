@@ -17,10 +17,11 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
           {/* Left: Hamburger button */}
           <div className="flex lg:hidden">
             <button
-              className="text-gray-500 hover:text-gray-600"
+              id="hamburger-menu"
+              className="text-gray-500 hover:text-gray-600 p-2 rounded-md"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
               aria-controls="sidebar"
               aria-expanded={sidebarOpen}
-              onClick={() => setSidebarOpen(!sidebarOpen)}
             >
               <span className="sr-only">Abrir menu lateral</span>
               <Menu className="w-6 h-6" />
