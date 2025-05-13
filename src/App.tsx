@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import PeopleManager from './pages/PeopleManager';
 import GroupManager from './pages/GroupManager';
 import LocationManager from './pages/LocationManager';
+import TerritoriesManager from './pages/TerritoriesManager';
 import { AppProvider } from './context/AppContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -19,6 +20,7 @@ function App() {
               <Route path="people" element={<PeopleManager />} />
               <Route path="groups" element={<GroupManager />} />
               <Route path="locations" element={<LocationManager />} />
+              <Route path="territories" element={<TerritoriesManager />} />
             </Route>
           </Routes>
         </Router>
@@ -26,5 +28,3 @@ function App() {
     </ErrorBoundary>
   );
 }
-
-export default App;
