@@ -2,16 +2,19 @@ import React, { useState } from 'react';
 import { Plus, Trash, Edit, Search, Globe, Image as ImageIcon } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import TerritoryForm from '../components/TerritoryForm';
+import TerritoryPreview from '../components/TerritoryPreview';
 
 const TerritoriesManager: React.FC = () => {
   const { territories, addTerritory, updateTerritory, removeTerritory } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingTerritory, setEditingTerritory] = useState<Territory | null>(null);
+  const [selectedTerritory, setSelectedTerritory] = useState<Territory | null>(null);
 
   const handleEditTerritory = (territory: Territory) => {
     setEditingTerritory(territory);
     setIsAddModalOpen(true);
+    setSelectedTerritory(null);
   };
 
   const handleCloseModal = () => {
@@ -26,6 +29,14 @@ const TerritoriesManager: React.FC = () => {
       await addTerritory(territory);
     }
     handleCloseModal();
+  };
+
+  const handlePreviewTerritory = (territory: Territory) => {
+    setSelectedTerritory(territory);
+  };
+
+  const handleClosePreview = () => {
+    setSelectedTerritory(null);
   };
 
   const filteredTerritories = territories.filter(territory => 
@@ -72,7 +83,8 @@ const TerritoriesManager: React.FC = () => {
           filteredTerritories.map((territory) => (
             <div
               key={territory.id}
-              className="bg-white shadow rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+              className="bg-white shadow rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handlePreviewTerritory(territory)}
             >
               <div className="aspect-w-16 aspect-h-9 bg-gray-200">
                 {territory.image_url ? (
@@ -92,15 +104,21 @@ const TerritoriesManager: React.FC = () => {
                 {territory.description && (
                   <p className="mt-1 text-sm text-gray-500 line-clamp-2">{territory.description}</p>
                 )}
-                <div className="mt-4 flex justify-end space-x-2">
+                <div className="mt-4 flex justify-end space-x-2" onClick={(e) => e.stopPropagation()}>
                   <button
-                    onClick={() => handleEditTerritory(territory)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditTerritory(territory);
+                    }}
                     className="p-2 text-gray-400 hover:text-blue-600 focus:outline-none focus:text-blue-600"
                   >
                     <Edit size={18} />
                   </button>
                   <button
-                    onClick={() => removeTerritory(territory.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeTerritory(territory.id);
+                    }}
                     className="p-2 text-gray-400 hover:text-red-600 focus:outline-none focus:text-red-600"
                   >
                     <Trash size={18} />
@@ -118,6 +136,15 @@ const TerritoriesManager: React.FC = () => {
           territory={editingTerritory}
           onClose={handleCloseModal}
           onSave={handleSaveTerritory}
+        />
+      )}
+
+      {/* Preview Modal */}
+      {selectedTerritory && (
+        <TerritoryPreview
+          territory={selectedTerritory}
+          onClose={handleClosePreview}
+          onEdit={() => handleEditTerritory(selectedTerritory)}
         />
       )}
     </div>
