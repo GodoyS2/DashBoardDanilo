@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Users, UserPlus, Map, Home, X } from 'lucide-react';
+import { Users, UserPlus, Map, Home, X, Globe } from 'lucide-react';
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -93,6 +93,20 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
             >
               <Map className="flex-shrink-0 h-6 w-6 mr-3" />
               <span className="text-sm font-medium">Gerenciar Locais</span>
+            </NavLink>
+            <NavLink
+              to="/territories"
+              className={({ isActive }) =>
+                `flex items-center px-4 py-3 rounded-lg transition duration-150 ${
+                  isActive
+                    ? 'bg-indigo-900 text-white'
+                    : 'text-indigo-200 hover:text-white hover:bg-indigo-900'
+                }`
+              }
+              onClick={() => setSidebarOpen(false)}
+            >
+              <Globe className="flex-shrink-0 h-6 w-6 mr-3" />
+              <span className="text-sm font-medium">Territórios</span>
             </NavLink>
           </nav>
         </div>
