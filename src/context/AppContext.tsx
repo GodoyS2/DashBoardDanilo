@@ -1,6 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, checkSupabaseConnection } from '../lib/supabase';
 
+export interface Territory {
+  id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Person {
   id: string;
   name: string;
@@ -37,6 +46,7 @@ interface AppContextType {
   people: Person[];
   groups: Group[];
   locations: Location[];
+  territories: Territory[];
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   addPerson: (person: Person) => Promise<void>;
@@ -48,6 +58,9 @@ interface AppContextType {
   addLocation: (location: Location) => Promise<void>;
   updateLocation: (location: Location) => Promise<void>;
   removeLocation: (id: string) => Promise<void>;
+  addTerritory: (territory: Territory) => Promise<void>;
+  updateTerritory: (territory: Territory) => Promise<void>;
+  removeTerritory: (id: string) => Promise<void>;
   isLoading: boolean;
   error: string | null;
 }
@@ -56,6 +69,7 @@ const AppContext = createContext<AppContextType>({
   people: [],
   groups: [],
   locations: [],
+  territories: [],
   searchTerm: '',
   setSearchTerm: () => {},
   addPerson: async () => {},
@@ -67,6 +81,9 @@ const AppContext = createContext<AppContextType>({
   addLocation: async () => {},
   updateLocation: async () => {},
   removeLocation: async () => {},
+  addTerritory: async () => {},
+  updateTerritory: async () => {},
+  removeTerritory: async () => {},
   isLoading: true,
   error: null
 });
@@ -75,6 +92,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [people, setPeople] = useState<Person[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [territories, setTerritories] = useState<Territory[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,20 +103,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsLoading(true);
         setError(null);
 
-        // Check Supabase connection first
         const isConnected = await checkSupabaseConnection();
         if (!isConnected) {
           throw new Error('Unable to connect to the database. Please check your connection and try again.');
         }
 
-        // Load people
+        // Load territories
+        const { data: territoriesData, error: territoriesError } = await supabase
+          .from('territories')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (territoriesError) throw territoriesError;
+        setTerritories(territoriesData || []);
+
+        // Load existing data
         const { data: peopleData, error: peopleError } = await supabase
           .from('people')
           .select('*');
         if (peopleError) throw peopleError;
         setPeople(peopleData || []);
 
-        // Load groups with members
         const { data: groupsData, error: groupsError } = await supabase
           .from('groups')
           .select(`
@@ -119,7 +144,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         })) || [];
         setGroups(formattedGroups);
 
-        // Load locations with assignments
         const { data: locationsData, error: locationsError } = await supabase
           .from('locations')
           .select(`
@@ -160,6 +184,61 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     loadData();
   }, []);
 
+  const addTerritory = async (territory: Territory) => {
+    try {
+      const { data, error } = await supabase
+        .from('territories')
+        .insert([{
+          name: territory.name,
+          description: territory.description,
+          image_url: territory.image_url
+        }])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      setTerritories(prev => [data, ...prev]);
+    } catch (error) {
+      console.error('Error adding territory:', error);
+      throw error;
+    }
+  };
+
+  const updateTerritory = async (territory: Territory) => {
+    try {
+      const { error } = await supabase
+        .from('territories')
+        .update({
+          name: territory.name,
+          description: territory.description,
+          image_url: territory.image_url
+        })
+        .eq('id', territory.id);
+      
+      if (error) throw error;
+      setTerritories(prev => prev.map(t => t.id === territory.id ? territory : t));
+    } catch (error) {
+      console.error('Error updating territory:', error);
+      throw error;
+    }
+  };
+
+  const removeTerritory = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('territories')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      setTerritories(prev => prev.filter(t => t.id !== id));
+    } catch (error) {
+      console.error('Error removing territory:', error);
+      throw error;
+    }
+  };
+
+  // Existing methods...
   const addPerson = async (person: Person) => {
     try {
       const { data, error } = await supabase
@@ -426,6 +505,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         people,
         groups,
         locations,
+        territories,
         searchTerm,
         setSearchTerm,
         addPerson,
@@ -437,6 +517,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addLocation,
         updateLocation,
         removeLocation,
+        addTerritory,
+        updateTerritory,
+        removeTerritory,
         isLoading,
         error
       }}
