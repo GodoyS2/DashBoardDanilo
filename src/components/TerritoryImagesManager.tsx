@@ -109,13 +109,13 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                 </div>
 
                 {/* Upload section */}
-                <div className="mb-6">
+                <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Adicionar Nova Imagem
                   </label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                  <div className="mt-1 flex justify-center px-4 py-3 border-2 border-gray-300 border-dashed rounded-md">
                     <div className="space-y-1 text-center">
-                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                      <Upload className="mx-auto h-8 w-8 text-gray-400" />
                       <div className="flex text-sm text-gray-600">
                         <label
                           htmlFor="image-upload"
@@ -141,7 +141,7 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                 </div>
 
                 {/* Images grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
                   {images.map(image => (
                     <div
                       key={image.id}
@@ -153,9 +153,9 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                       <img
                         src={image.url}
                         alt=""
-                        className="w-full h-48 object-cover"
+                        className="w-full h-32 object-cover"
                       />
-                      <div className="absolute top-2 right-2 flex space-x-2">
+                      <div className="absolute top-1 right-1 flex space-x-1">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -164,7 +164,7 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                           className="p-1 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-colors"
                           title="Visualizar imagem"
                         >
-                          <Eye size={16} />
+                          <Eye size={14} />
                         </button>
                         <button
                           onClick={(e) => {
@@ -174,15 +174,15 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                           className="p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                           title="Remover imagem"
                         >
-                          <Trash size={16} />
+                          <Trash size={14} />
                         </button>
                       </div>
-                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 text-xs">
                         <div className="flex items-center space-x-2">
-                          <Users size={14} />
-                          <span>{image.assignedGroups.length} grupos</span>
-                          <UserPlus size={14} />
-                          <span>{image.assignedPeople.length} pessoas</span>
+                          <Users size={12} />
+                          <span>{image.assignedGroups.length}</span>
+                          <UserPlus size={12} />
+                          <span>{image.assignedPeople.length}</span>
                         </div>
                       </div>
                     </div>
@@ -196,51 +196,53 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                       Atribuições da Imagem
                     </h4>
                     
-                    {/* Groups */}
-                    <div className="mb-4">
-                      <h5 className="text-sm font-medium text-gray-700 mb-2">Grupos</h5>
-                      <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
-                        {groups.map(group => (
-                          <div key={group.id} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              id={`group-${group.id}`}
-                              checked={selectedImage.assignedGroups.includes(group.id)}
-                              onChange={() => handleAssignGroup(selectedImage.id, group.id)}
-                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                            />
-                            <label
-                              htmlFor={`group-${group.id}`}
-                              className="ml-2 block text-sm text-gray-900"
-                            >
-                              {group.name}
-                            </label>
-                          </div>
-                        ))}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Groups */}
+                      <div>
+                        <h5 className="text-sm font-medium text-gray-700 mb-2">Grupos</h5>
+                        <div className="space-y-1 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
+                          {groups.map(group => (
+                            <div key={group.id} className="flex items-center">
+                              <input
+                                type="checkbox"
+                                id={`group-${group.id}`}
+                                checked={selectedImage.assignedGroups.includes(group.id)}
+                                onChange={() => handleAssignGroup(selectedImage.id, group.id)}
+                                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                              />
+                              <label
+                                htmlFor={`group-${group.id}`}
+                                className="ml-2 block text-sm text-gray-900"
+                              >
+                                {group.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* People */}
-                    <div>
-                      <h5 className="text-sm font-medium text-gray-700 mb-2">Pessoas</h5>
-                      <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
-                        {people.map(person => (
-                          <div key={person.id} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              id={`person-${person.id}`}
-                              checked={selectedImage.assignedPeople.includes(person.id)}
-                              onChange={() => handleAssignPerson(selectedImage.id, person.id)}
-                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                            />
-                            <label
-                              htmlFor={`person-${person.id}`}
-                              className="ml-2 block text-sm text-gray-900"
-                            >
-                              {person.name}
-                            </label>
-                          </div>
-                        ))}
+                      {/* People */}
+                      <div>
+                        <h5 className="text-sm font-medium text-gray-700 mb-2">Pessoas</h5>
+                        <div className="space-y-1 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
+                          {people.map(person => (
+                            <div key={person.id} className="flex items-center">
+                              <input
+                                type="checkbox"
+                                id={`person-${person.id}`}
+                                checked={selectedImage.assignedPeople.includes(person.id)}
+                                onChange={() => handleAssignPerson(selectedImage.id, person.id)}
+                                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                              />
+                              <label
+                                htmlFor={`person-${person.id}`}
+                                className="ml-2 block text-sm text-gray-900"
+                              >
+                                {person.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
