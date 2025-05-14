@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Upload, Image as ImageIcon, UserPlus, Users, Trash, Eye, XCircle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { v4 as uuidv4 } from 'uuid';
 
 interface TerritoryImagesManagerProps {
   territory: Territory;
@@ -26,7 +27,7 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
         const reader = new FileReader();
         reader.onloadend = () => {
           const newImage: TerritoryImage = {
-            id: Date.now().toString(),
+            id: uuidv4(), // Using UUID instead of timestamp
             url: reader.result as string,
             assignedGroups: [],
             assignedPeople: [],
