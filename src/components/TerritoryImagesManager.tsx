@@ -199,22 +199,19 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                     {/* Groups */}
                     <div className="mb-4">
                       <h5 className="text-sm font-medium text-gray-700 mb-2">Grupos</h5>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
                         {groups.map(group => (
-                          <div
-                            key={group.id}
-                            className="relative flex items-center p-2 rounded-md border border-gray-200 hover:bg-gray-50"
-                          >
+                          <div key={group.id} className="flex items-center">
                             <input
                               type="checkbox"
                               id={`group-${group.id}`}
                               checked={selectedImage.assignedGroups.includes(group.id)}
                               onChange={() => handleAssignGroup(selectedImage.id, group.id)}
-                              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                             />
                             <label
                               htmlFor={`group-${group.id}`}
-                              className="ml-2 text-sm text-gray-900 cursor-pointer flex-1"
+                              className="ml-2 block text-sm text-gray-900"
                             >
                               {group.name}
                             </label>
@@ -226,22 +223,19 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                     {/* People */}
                     <div>
                       <h5 className="text-sm font-medium text-gray-700 mb-2">Pessoas</h5>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
                         {people.map(person => (
-                          <div
-                            key={person.id}
-                            className="relative flex items-center p-2 rounded-md border border-gray-200 hover:bg-gray-50"
-                          >
+                          <div key={person.id} className="flex items-center">
                             <input
                               type="checkbox"
                               id={`person-${person.id}`}
                               checked={selectedImage.assignedPeople.includes(person.id)}
                               onChange={() => handleAssignPerson(selectedImage.id, person.id)}
-                              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                             />
                             <label
                               htmlFor={`person-${person.id}`}
-                              className="ml-2 text-sm text-gray-900 cursor-pointer flex-1"
+                              className="ml-2 block text-sm text-gray-900"
                             >
                               {person.name}
                             </label>
