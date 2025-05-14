@@ -8,6 +8,7 @@ export interface Territory {
   image_url?: string;
   created_at?: string;
   updated_at?: string;
+  images?: TerritoryImage[];
 }
 
 export interface Person {
@@ -40,6 +41,15 @@ export interface Location {
   assignedGroups: string[];
   assignedPeople: string[];
   updatedAt: number;
+}
+
+export interface TerritoryImage {
+  id: string;
+  url: string;
+  description?: string;
+  assignedGroups: string[];
+  assignedPeople: string[];
+  createdAt: string;
 }
 
 interface AppContextType {
@@ -108,14 +118,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           throw new Error('Unable to connect to the database. Please check your connection and try again.');
         }
 
-        // Load territories
+        // Load territories with their images and assignments
         const { data: territoriesData, error: territoriesError } = await supabase
           .from('territories')
-          .select('*')
+          .select(`
+            *,
+            territory_images (
+              id,
+              url,
+              description,
+              created_at,
+              territory_image_groups (
+                group_id
+              ),
+              territory_image_people (
+                person_id
+              )
+            )
+          `)
           .order('created_at', { ascending: false });
         
         if (territoriesError) throw territoriesError;
-        setTerritories(territoriesData || []);
+
+        const formattedTerritories = territoriesData?.map(territory => ({
+          ...territory,
+          images: territory.territory_images?.map((image: any) => ({
+            id: image.id,
+            url: image.url,
+            description: image.description,
+            createdAt: image.created_at,
+            assignedGroups: image.territory_image_groups.map((g: any) => g.group_id),
+            assignedPeople: image.territory_image_people.map((p: any) => p.person_id)
+          }))
+        })) || [];
+
+        setTerritories(formattedTerritories);
 
         // Load existing data
         const { data: peopleData, error: peopleError } = await supabase
@@ -184,6 +221,133 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     loadData();
   }, []);
 
+  const updateTerritory = async (territory: Territory) => {
+    try {
+      // Update territory basic info
+      const { error: territoryError } = await supabase
+        .from('territories')
+        .update({
+          name: territory.name,
+          description: territory.description,
+          image_url: territory.image_url
+        })
+        .eq('id', territory.id);
+      
+      if (territoryError) throw territoryError;
+
+      // Handle images if they exist
+      if (territory.images) {
+        // Get existing images
+        const { data: existingImages } = await supabase
+          .from('territory_images')
+          .select('id')
+          .eq('territory_id', territory.id);
+
+        const existingImageIds = existingImages?.map(img => img.id) || [];
+        const newImageIds = territory.images.map(img => img.id);
+
+        // Remove images that no longer exist
+        const imagesToRemove = existingImageIds.filter(id => !newImageIds.includes(id));
+        if (imagesToRemove.length > 0) {
+          const { error: removeError } = await supabase
+            .from('territory_images')
+            .delete()
+            .in('id', imagesToRemove);
+          
+          if (removeError) throw removeError;
+        }
+
+        // Add or update images
+        for (const image of territory.images) {
+          if (!existingImageIds.includes(image.id)) {
+            // Insert new image
+            const { data: newImage, error: insertError } = await supabase
+              .from('territory_images')
+              .insert({
+                id: image.id,
+                territory_id: territory.id,
+                url: image.url,
+                description: image.description
+              })
+              .select()
+              .single();
+            
+            if (insertError) throw insertError;
+
+            // Insert group assignments
+            if (image.assignedGroups.length > 0) {
+              const { error: groupsError } = await supabase
+                .from('territory_image_groups')
+                .insert(
+                  image.assignedGroups.map(groupId => ({
+                    image_id: image.id,
+                    group_id: groupId
+                  }))
+                );
+              
+              if (groupsError) throw groupsError;
+            }
+
+            // Insert people assignments
+            if (image.assignedPeople.length > 0) {
+              const { error: peopleError } = await supabase
+                .from('territory_image_people')
+                .insert(
+                  image.assignedPeople.map(personId => ({
+                    image_id: image.id,
+                    person_id: personId
+                  }))
+                );
+              
+              if (peopleError) throw peopleError;
+            }
+          } else {
+            // Update existing image assignments
+            // First, remove all existing assignments
+            await supabase
+              .from('territory_image_groups')
+              .delete()
+              .eq('image_id', image.id);
+            
+            await supabase
+              .from('territory_image_people')
+              .delete()
+              .eq('image_id', image.id);
+
+            // Then add new assignments
+            if (image.assignedGroups.length > 0) {
+              await supabase
+                .from('territory_image_groups')
+                .insert(
+                  image.assignedGroups.map(groupId => ({
+                    image_id: image.id,
+                    group_id: groupId
+                  }))
+                );
+            }
+
+            if (image.assignedPeople.length > 0) {
+              await supabase
+                .from('territory_image_people')
+                .insert(
+                  image.assignedPeople.map(personId => ({
+                    image_id: image.id,
+                    person_id: personId
+                  }))
+                );
+            }
+          }
+        }
+      }
+
+      // Update local state
+      setTerritories(prev => prev.map(t => t.id === territory.id ? territory : t));
+    } catch (error) {
+      console.error('Error updating territory:', error);
+      throw error;
+    }
+  };
+
   const addTerritory = async (territory: Territory) => {
     try {
       const { data, error } = await supabase
@@ -204,25 +368,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const updateTerritory = async (territory: Territory) => {
-    try {
-      const { error } = await supabase
-        .from('territories')
-        .update({
-          name: territory.name,
-          description: territory.description,
-          image_url: territory.image_url
-        })
-        .eq('id', territory.id);
-      
-      if (error) throw error;
-      setTerritories(prev => prev.map(t => t.id === territory.id ? territory : t));
-    } catch (error) {
-      console.error('Error updating territory:', error);
-      throw error;
-    }
-  };
-
   const removeTerritory = async (id: string) => {
     try {
       const { error } = await supabase
@@ -238,7 +383,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Existing methods...
   const addPerson = async (person: Person) => {
     try {
       const { data, error } = await supabase
