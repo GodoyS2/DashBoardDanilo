@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, Upload, Image as ImageIcon, UserPlus, Users, Trash, Eye, XCircle } from 'lucide-react';
+import { X, Upload, Image as ImageIcon, UserPlus, Users, Trash, Eye, XCircle, Mail } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '../lib/supabase';
 
 interface TerritoryImagesManagerProps {
   territory: Territory;
@@ -19,6 +20,10 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
   const [selectedImage, setSelectedImage] = useState<TerritoryImage | null>(null);
   const [previewImage, setPreviewImage] = useState<TerritoryImage | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [email, setEmail] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -81,6 +86,42 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
       ...territory,
       images
     });
+  };
+
+  const handleSendEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      setEmailError('Email é obrigatório');
+      return;
+    }
+
+    try {
+      setSendingEmail(true);
+      setEmailError(null);
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-territory`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          territory_id: territory.id,
+          email,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao enviar email');
+      }
+
+      setShowEmailModal(false);
+      setEmail('');
+    } catch (error) {
+      setEmailError(error.message);
+    } finally {
+      setSendingEmail(false);
+    }
   };
 
   return (
@@ -258,6 +299,14 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
           <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <button
               type="button"
+              onClick={() => setShowEmailModal(true)}
+              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+            >
+              <Mail className="w-5 h-5 mr-2" />
+              Enviar por Email
+            </button>
+            <button
+              type="button"
               onClick={handleSave}
               className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
             >
@@ -273,6 +322,63 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Email Modal */}
+      {showEmailModal && (
+        <div className="fixed inset-0 z-[70] overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <form onSubmit={handleSendEmail}>
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div className="sm:flex sm:items-start">
+                    <div className="w-full">
+                      <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                        Enviar Imagens por Email
+                      </h3>
+                      <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          id="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className={`mt-1 block w-full px-3 py-2 border ${
+                            emailError ? 'border-red-300' : 'border-gray-300'
+                          } rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                          placeholder="Digite o email do destinatário"
+                        />
+                        {emailError && (
+                          <p className="mt-2 text-sm text-red-600">{emailError}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button
+                    type="submit"
+                    disabled={sendingEmail}
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                  >
+                    {sendingEmail ? 'Enviando...' : 'Enviar'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowEmailModal(false)}
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Image Preview Modal */}
       {previewImage && (
