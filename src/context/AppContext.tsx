@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { supabase, checkSupabaseConnection } from '../lib/supabase';
 
 export interface Territory {
@@ -259,12 +260,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         // Add or update images
         for (const image of territory.images) {
-          if (!existingImageIds.includes(image.id)) {
+          const imageId = image.id || uuidv4(); // Generate UUID for new images
+          
+          if (!existingImageIds.includes(imageId)) {
             // Insert new image
             const { data: newImage, error: insertError } = await supabase
               .from('territory_images')
               .insert({
-                id: image.id,
+                id: imageId,
                 territory_id: territory.id,
                 url: image.url,
                 description: image.description
@@ -280,7 +283,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 .from('territory_image_groups')
                 .insert(
                   image.assignedGroups.map(groupId => ({
-                    image_id: image.id,
+                    image_id: imageId,
                     group_id: groupId
                   }))
                 );
@@ -294,7 +297,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 .from('territory_image_people')
                 .insert(
                   image.assignedPeople.map(personId => ({
-                    image_id: image.id,
+                    image_id: imageId,
                     person_id: personId
                   }))
                 );
@@ -307,12 +310,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             await supabase
               .from('territory_image_groups')
               .delete()
-              .eq('image_id', image.id);
+              .eq('image_id', imageId);
             
             await supabase
               .from('territory_image_people')
               .delete()
-              .eq('image_id', image.id);
+              .eq('image_id', imageId);
 
             // Then add new assignments
             if (image.assignedGroups.length > 0) {
@@ -320,7 +323,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 .from('territory_image_groups')
                 .insert(
                   image.assignedGroups.map(groupId => ({
-                    image_id: image.id,
+                    image_id: imageId,
                     group_id: groupId
                   }))
                 );
@@ -331,7 +334,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 .from('territory_image_people')
                 .insert(
                   image.assignedPeople.map(personId => ({
-                    image_id: image.id,
+                    image_id: imageId,
                     person_id: personId
                   }))
                 );
