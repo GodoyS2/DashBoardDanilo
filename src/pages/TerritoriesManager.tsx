@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash, Edit, Search, Globe, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash, Edit, Search, Globe, Image as ImageIcon, Eye } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import TerritoryForm from '../components/TerritoryForm';
 import TerritoryPreview from '../components/TerritoryPreview';
@@ -83,34 +83,45 @@ const TerritoriesManager: React.FC = () => {
           filteredTerritories.map((territory) => (
             <div
               key={territory.id}
-              className="bg-white shadow rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => handlePreviewTerritory(territory)}
+              className="bg-white shadow rounded-lg overflow-hidden hover:shadow-md transition-shadow"
             >
-              <div className="aspect-w-16 aspect-h-9 bg-gray-200">
-                {territory.image_url ? (
-                  <img
-                    src={territory.image_url}
-                    alt={territory.name}
-                    className="w-full h-48 object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-48 flex items-center justify-center bg-gray-100">
-                    <ImageIcon className="h-12 w-12 text-gray-400" />
-                  </div>
-                )}
+              <div className="relative">
+                <div className="aspect-w-16 aspect-h-9 bg-gray-200">
+                  {territory.image_url ? (
+                    <img
+                      src={territory.image_url}
+                      alt={territory.name}
+                      className="w-full h-48 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-48 flex items-center justify-center bg-gray-100">
+                      <ImageIcon className="h-12 w-12 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+                {/* Preview overlay */}
+                <div 
+                  className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-opacity flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer"
+                  onClick={() => handlePreviewTerritory(territory)}
+                >
+                  <button className="bg-white text-gray-800 px-4 py-2 rounded-full flex items-center transform scale-95 hover:scale-100 transition-transform">
+                    <Eye size={18} className="mr-2" />
+                    Visualizar
+                  </button>
+                </div>
               </div>
               <div className="p-4">
-                <h3 className="text-lg font-medium text-gray-900">{territory.name}</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-1">{territory.name}</h3>
                 {territory.description && (
-                  <p className="mt-1 text-sm text-gray-500 line-clamp-2">{territory.description}</p>
+                  <p className="text-sm text-gray-500 line-clamp-2 mb-3">{territory.description}</p>
                 )}
-                <div className="mt-4 flex justify-end space-x-2" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-end space-x-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleEditTerritory(territory);
                     }}
-                    className="p-2 text-gray-400 hover:text-blue-600 focus:outline-none focus:text-blue-600"
+                    className="p-2 text-gray-400 hover:text-blue-600 focus:outline-none focus:text-blue-600 transition-colors"
                   >
                     <Edit size={18} />
                   </button>
@@ -119,7 +130,7 @@ const TerritoriesManager: React.FC = () => {
                       e.stopPropagation();
                       removeTerritory(territory.id);
                     }}
-                    className="p-2 text-gray-400 hover:text-red-600 focus:outline-none focus:text-red-600"
+                    className="p-2 text-gray-400 hover:text-red-600 focus:outline-none focus:text-red-600 transition-colors"
                   >
                     <Trash size={18} />
                   </button>
