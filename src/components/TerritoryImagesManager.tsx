@@ -200,7 +200,7 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                       {/* Groups */}
                       <div>
                         <h5 className="text-sm font-medium text-gray-700 mb-2">Grupos</h5>
-                        <div className="space-y-1 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
+                        <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
                           {groups.map(group => (
                             <div key={group.id} className="flex items-center">
                               <input
@@ -208,13 +208,13 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                                 id={`group-${group.id}`}
                                 checked={selectedImage.assignedGroups.includes(group.id)}
                                 onChange={() => handleAssignGroup(selectedImage.id, group.id)}
-                                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                               />
                               <label
                                 htmlFor={`group-${group.id}`}
                                 className="ml-2 block text-sm text-gray-900"
                               >
-                                {group.name}
+                                {group.name} ({group.members.length} membros)
                               </label>
                             </div>
                           ))}
@@ -224,7 +224,7 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                       {/* People */}
                       <div>
                         <h5 className="text-sm font-medium text-gray-700 mb-2">Pessoas</h5>
-                        <div className="space-y-1 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
+                        <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
                           {people.map(person => (
                             <div key={person.id} className="flex items-center">
                               <input
@@ -232,7 +232,7 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                                 id={`person-${person.id}`}
                                 checked={selectedImage.assignedPeople.includes(person.id)}
                                 onChange={() => handleAssignPerson(selectedImage.id, person.id)}
-                                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                               />
                               <label
                                 htmlFor={`person-${person.id}`}
