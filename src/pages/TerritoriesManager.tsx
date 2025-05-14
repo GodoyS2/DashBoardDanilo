@@ -3,6 +3,7 @@ import { Plus, Trash, Edit, Search, Globe, Image as ImageIcon, Eye, Images } fro
 import { useAppContext } from '../context/AppContext';
 import TerritoryForm from '../components/TerritoryForm';
 import TerritoryPreview from '../components/TerritoryPreview';
+import TerritoryImagesManager from '../components/TerritoryImagesManager';
 
 const TerritoriesManager: React.FC = () => {
   const { territories, addTerritory, updateTerritory, removeTerritory } = useAppContext();
@@ -10,6 +11,7 @@ const TerritoriesManager: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingTerritory, setEditingTerritory] = useState<Territory | null>(null);
   const [selectedTerritory, setSelectedTerritory] = useState<Territory | null>(null);
+  const [showImagesManager, setShowImagesManager] = useState(false);
 
   const handleEditTerritory = (territory: Territory) => {
     setEditingTerritory(territory);
@@ -41,8 +43,13 @@ const TerritoriesManager: React.FC = () => {
 
   const handleViewImages = (territory: Territory, e: React.MouseEvent) => {
     e.stopPropagation();
-    // Here you would implement the logic to show related images
-    console.log('View images for territory:', territory.name);
+    setSelectedTerritory(territory);
+    setShowImagesManager(true);
+  };
+
+  const handleSaveImages = async (territory: Territory) => {
+    await updateTerritory(territory);
+    setShowImagesManager(false);
   };
 
   const filteredTerritories = territories.filter(territory => 
@@ -164,11 +171,20 @@ const TerritoriesManager: React.FC = () => {
       )}
 
       {/* Preview Modal */}
-      {selectedTerritory && (
+      {selectedTerritory && !showImagesManager && (
         <TerritoryPreview
           territory={selectedTerritory}
           onClose={handleClosePreview}
           onEdit={() => handleEditTerritory(selectedTerritory)}
+        />
+      )}
+
+      {/* Images Manager Modal */}
+      {showImagesManager && selectedTerritory && (
+        <TerritoryImagesManager
+          territory={selectedTerritory}
+          onClose={() => setShowImagesManager(false)}
+          onSave={handleSaveImages}
         />
       )}
     </div>
