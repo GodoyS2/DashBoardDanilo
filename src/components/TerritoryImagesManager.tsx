@@ -230,7 +230,7 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                               <input
                                 type="checkbox"
                                 id={`person-${person.id}`}
-                                checked={selectedImage.assignedPeople.includes(person.id)}
+                                checked={selectedImage.assignedPeople.includes(person.id) || false}
                                 onChange={() => handleAssignPerson(selectedImage.id, person.id)}
                                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                               />
