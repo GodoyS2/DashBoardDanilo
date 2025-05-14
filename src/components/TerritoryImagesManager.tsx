@@ -205,14 +205,12 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                             key={group.id}
                             className="relative flex items-center p-2 rounded-md border border-gray-200 hover:bg-gray-50 cursor-pointer"
                           >
-                            <div className="flex items-center h-5">
-                              <input
-                                type="checkbox"
-                                checked={selectedImage.assignedGroups.includes(group.id)}
-                                onChange={() => handleAssignGroup(selectedImage.id, group.id)}
-                                className="appearance-none h-4 w-4 border border-gray-300 rounded bg-white checked:bg-indigo-600 checked:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
-                              />
-                            </div>
+                            <input
+                              type="checkbox"
+                              checked={selectedImage.assignedGroups.includes(group.id)}
+                              onChange={() => handleAssignGroup(selectedImage.id, group.id)}
+                              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            />
                             <span className="ml-2 text-sm text-gray-900">{group.name}</span>
                           </label>
                         ))}
@@ -228,14 +226,12 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                             key={person.id}
                             className="relative flex items-center p-2 rounded-md border border-gray-200 hover:bg-gray-50 cursor-pointer"
                           >
-                            <div className="flex items-center h-5">
-                              <input
-                                type="checkbox"
-                                checked={selectedImage.assignedPeople.includes(person.id)}
-                                onChange={() => handleAssignPerson(selectedImage.id, person.id)}
-                                className="appearance-none h-4 w-4 border border-gray-300 rounded bg-white checked:bg-indigo-600 checked:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
-                              />
-                            </div>
+                            <input
+                              type="checkbox"
+                              checked={selectedImage.assignedPeople.includes(person.id)}
+                              onChange={() => handleAssignPerson(selectedImage.id, person.id)}
+                              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            />
                             <span className="ml-2 text-sm text-gray-900">{person.name}</span>
                           </label>
                         ))}
