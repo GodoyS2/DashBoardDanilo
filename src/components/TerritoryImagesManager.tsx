@@ -153,7 +153,7 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                       <img
                         src={image.url}
                         alt=""
-                        className="w-full h-32 object-cover"
+                        className="w-full h-24 object-cover"
                       />
                       <div className="absolute top-1 right-1 flex space-x-1">
                         <button
@@ -203,19 +203,21 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                         <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
                           {groups.map(group => (
                             <div key={group.id} className="flex items-center">
-                              <input
-                                type="checkbox"
-                                id={`group-${group.id}`}
-                                checked={selectedImage.assignedGroups.includes(group.id)}
-                                onChange={() => handleAssignGroup(selectedImage.id, group.id)}
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                              />
-                              <label
-                                htmlFor={`group-${group.id}`}
-                                className="ml-2 block text-sm text-gray-900"
-                              >
-                                {group.name} ({group.members.length} membros)
-                              </label>
+                              <div className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  id={`group-${group.id}`}
+                                  checked={selectedImage.assignedGroups.includes(group.id)}
+                                  onChange={() => handleAssignGroup(selectedImage.id, group.id)}
+                                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                />
+                                <label
+                                  htmlFor={`group-${group.id}`}
+                                  className="ml-2 block text-sm text-gray-900"
+                                >
+                                  {group.name} ({group.members.length} membros)
+                                </label>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -227,19 +229,21 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                         <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
                           {people.map(person => (
                             <div key={person.id} className="flex items-center">
-                              <input
-                                type="checkbox"
-                                id={`person-${person.id}`}
-                                checked={selectedImage.assignedPeople.includes(person.id)}
-                                onChange={() => handleAssignPerson(selectedImage.id, person.id)}
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                              />
-                              <label
-                                htmlFor={`person-${person.id}`}
-                                className="ml-2 block text-sm text-gray-900"
-                              >
-                                {person.name}
-                              </label>
+                              <div className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  id={`person-${person.id}`}
+                                  checked={selectedImage.assignedPeople.includes(person.id)}
+                                  onChange={() => handleAssignPerson(selectedImage.id, person.id)}
+                                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                />
+                                <label
+                                  htmlFor={`person-${person.id}`}
+                                  className="ml-2 block text-sm text-gray-900"
+                                >
+                                  {person.name}
+                                </label>
+                              </div>
                             </div>
                           ))}
                         </div>
