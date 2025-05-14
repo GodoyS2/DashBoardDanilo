@@ -14,11 +14,20 @@ Deno.serve(async (req) => {
   try {
     const { territory_id, email } = await req.json();
 
+    if (!territory_id || !email) {
+      throw new Error('Territory ID and email are required');
+    }
+
     // Initialize Supabase client
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
+    const resendKey = Deno.env.get('RESEND_API_KEY');
+
+    if (!supabaseUrl || !supabaseKey || !resendKey) {
+      throw new Error('Missing required environment variables');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get territory data with images
     const { data: territory, error: territoryError } = await supabase
@@ -35,29 +44,97 @@ Deno.serve(async (req) => {
       .single();
 
     if (territoryError) throw territoryError;
+    if (!territory) throw new Error('Territory not found');
 
-    // Create email content
+    // Create email content with better styling
     const emailContent = `
-      <h2>Território: ${territory.name}</h2>
-      ${territory.description ? `<p>${territory.description}</p>` : ''}
-      <h3>Imagens do Território:</h3>
-      ${territory.territory_images.map((image: any) => `
-        <div style="margin-bottom: 20px;">
-          <img src="${image.url}" alt="${territory.name}" style="max-width: 100%; height: auto;" />
-          ${image.description ? `<p>${image.description}</p>` : ''}
-        </div>
-      `).join('')}
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Território: ${territory.name}</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 800px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .header {
+              background: #f3f4f6;
+              padding: 20px;
+              border-radius: 8px;
+              margin-bottom: 30px;
+            }
+            .territory-name {
+              color: #1f2937;
+              font-size: 24px;
+              margin: 0;
+            }
+            .territory-description {
+              color: #6b7280;
+              margin-top: 10px;
+            }
+            .images-container {
+              margin-top: 30px;
+            }
+            .image-card {
+              margin-bottom: 30px;
+              border: 1px solid #e5e7eb;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            .image-card img {
+              width: 100%;
+              height: auto;
+              display: block;
+            }
+            .image-description {
+              padding: 15px;
+              background: #f9fafb;
+              color: #4b5563;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 class="territory-name">${territory.name}</h1>
+            ${territory.description ? `
+              <p class="territory-description">${territory.description}</p>
+            ` : ''}
+          </div>
+          
+          <div class="images-container">
+            ${territory.territory_images?.length ? 
+              territory.territory_images.map((image: any) => `
+                <div class="image-card">
+                  <img src="${image.url}" alt="${territory.name}" />
+                  ${image.description ? `
+                    <div class="image-description">
+                      <p>${image.description}</p>
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('') : 
+              '<p>Nenhuma imagem disponível para este território.</p>'
+            }
+          </div>
+        </body>
+      </html>
     `;
 
     // Send email using Resend
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
+        'Authorization': `Bearer ${resendKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Territory Manager <noreply@yourdomain.com>',
+        from: 'Territory Manager <no-reply@resend.dev>',
         to: email,
         subject: `Imagens do Território: ${territory.name}`,
         html: emailContent,
@@ -65,7 +142,8 @@ Deno.serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to send email');
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to send email');
     }
 
     return new Response(
@@ -78,8 +156,12 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error) {
+    console.error('Error sending email:', error);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || 'An error occurred while sending the email'
+      }),
       { 
         status: 400,
         headers: {
