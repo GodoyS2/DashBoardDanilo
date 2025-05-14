@@ -27,7 +27,7 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
         const reader = new FileReader();
         reader.onloadend = () => {
           const newImage: TerritoryImage = {
-            id: uuidv4(),
+            id: uuidv4(), // Using UUID instead of timestamp
             url: reader.result as string,
             assignedGroups: [],
             assignedPeople: [],
@@ -81,6 +81,7 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
       ...territory,
       images
     });
+    onClose();
   };
 
   return (
@@ -200,26 +201,20 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                     <div className="mb-4">
                       <h5 className="text-sm font-medium text-gray-700 mb-2">Grupos</h5>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {groups.map(group => {
-                          const isChecked = selectedImage.assignedGroups.includes(group.id);
-                          return (
-                            <label
-                              key={group.id}
-                              className={`flex items-center p-2 rounded-md border ${
-                                isChecked ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'
-                              } hover:bg-gray-50 cursor-pointer`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                onChange={() => handleAssignGroup(selectedImage.id, group.id)}
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <span className="ml-2 text-sm text-gray-900">{group.name}</span>
-                            </label>
-                          );
-                        })}
+                        {groups.map(group => (
+                          <label
+                            key={group.id}
+                            className="flex items-center p-2 rounded-md border border-gray-200 hover:bg-gray-50"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedImage.assignedGroups.includes(group.id)}
+                              onChange={() => handleAssignGroup(selectedImage.id, group.id)}
+                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                            />
+                            <span className="ml-2 text-sm text-gray-900">{group.name}</span>
+                          </label>
+                        ))}
                       </div>
                     </div>
 
@@ -227,26 +222,20 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                     <div>
                       <h5 className="text-sm font-medium text-gray-700 mb-2">Pessoas</h5>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {people.map(person => {
-                          const isChecked = selectedImage.assignedPeople.includes(person.id);
-                          return (
-                            <label
-                              key={person.id}
-                              className={`flex items-center p-2 rounded-md border ${
-                                isChecked ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'
-                              } hover:bg-gray-50 cursor-pointer`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                onChange={() => handleAssignPerson(selectedImage.id, person.id)}
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <span className="ml-2 text-sm text-gray-900">{person.name}</span>
-                            </label>
-                          );
-                        })}
+                        {people.map(person => (
+                          <label
+                            key={person.id}
+                            className="flex items-center p-2 rounded-md border border-gray-200 hover:bg-gray-50"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedImage.assignedPeople.includes(person.id)}
+                              onChange={() => handleAssignPerson(selectedImage.id, person.id)}
+                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                            />
+                            <span className="ml-2 text-sm text-gray-900">{person.name}</span>
+                          </label>
+                        ))}
                       </div>
                     </div>
                   </div>
