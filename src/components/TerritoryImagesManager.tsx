@@ -27,7 +27,7 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
         const reader = new FileReader();
         reader.onloadend = () => {
           const newImage: TerritoryImage = {
-            id: uuidv4(),
+            id: uuidv4(), // Using UUID instead of timestamp
             url: reader.result as string,
             assignedGroups: [],
             assignedPeople: [],
@@ -81,6 +81,7 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
       ...territory,
       images
     });
+    onClose();
   };
 
   return (
@@ -113,7 +114,7 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Adicionar Nova Imagem
                   </label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-indigo-500 transition-colors cursor-pointer">
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                     <div className="space-y-1 text-center">
                       <Upload className="mx-auto h-12 w-12 text-gray-400" />
                       <div className="flex text-sm text-gray-600">
@@ -147,7 +148,7 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                       key={image.id}
                       className={`relative rounded-lg overflow-hidden border-2 ${
                         selectedImage?.id === image.id ? 'border-indigo-500' : 'border-transparent'
-                      } cursor-pointer transition-all hover:shadow-lg`}
+                      }`}
                       onClick={() => setSelectedImage(image)}
                     >
                       <img
@@ -201,27 +202,18 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                       <h5 className="text-sm font-medium text-gray-700 mb-2">Grupos</h5>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {groups.map(group => (
-                          <div
+                          <label
                             key={group.id}
-                            className={`flex items-center p-3 rounded-lg border transition-colors cursor-pointer ${
-                              selectedImage.assignedGroups.includes(group.id)
-                                ? 'border-indigo-500 bg-indigo-50'
-                                : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
-                            }`}
-                            onClick={() => handleAssignGroup(selectedImage.id, group.id)}
+                            className="flex items-center p-2 rounded-md border border-gray-200 hover:bg-gray-50"
                           >
-                            <div className="flex items-center flex-1 min-w-0">
-                              <input
-                                type="checkbox"
-                                checked={selectedImage.assignedGroups.includes(group.id)}
-                                onChange={() => handleAssignGroup(selectedImage.id, group.id)}
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded transition-colors"
-                              />
-                              <span className="ml-2 text-sm font-medium text-gray-900 truncate">
-                                {group.name}
-                              </span>
-                            </div>
-                          </div>
+                            <input
+                              type="checkbox"
+                              checked={selectedImage.assignedGroups.includes(group.id)}
+                              onChange={() => handleAssignGroup(selectedImage.id, group.id)}
+                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                            />
+                            <span className="ml-2 text-sm text-gray-900">{group.name}</span>
+                          </label>
                         ))}
                       </div>
                     </div>
@@ -231,27 +223,18 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                       <h5 className="text-sm font-medium text-gray-700 mb-2">Pessoas</h5>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {people.map(person => (
-                          <div
+                          <label
                             key={person.id}
-                            className={`flex items-center p-3 rounded-lg border transition-colors cursor-pointer ${
-                              selectedImage.assignedPeople.includes(person.id)
-                                ? 'border-indigo-500 bg-indigo-50'
-                                : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
-                            }`}
-                            onClick={() => handleAssignPerson(selectedImage.id, person.id)}
+                            className="flex items-center p-2 rounded-md border border-gray-200 hover:bg-gray-50"
                           >
-                            <div className="flex items-center flex-1 min-w-0">
-                              <input
-                                type="checkbox"
-                                checked={selectedImage.assignedPeople.includes(person.id)}
-                                onChange={() => handleAssignPerson(selectedImage.id, person.id)}
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded transition-colors"
-                              />
-                              <span className="ml-2 text-sm font-medium text-gray-900 truncate">
-                                {person.name}
-                              </span>
-                            </div>
-                          </div>
+                            <input
+                              type="checkbox"
+                              checked={selectedImage.assignedPeople.includes(person.id)}
+                              onChange={() => handleAssignPerson(selectedImage.id, person.id)}
+                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                            />
+                            <span className="ml-2 text-sm text-gray-900">{person.name}</span>
+                          </label>
                         ))}
                       </div>
                     </div>
