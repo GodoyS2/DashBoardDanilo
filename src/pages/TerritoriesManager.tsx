@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash, Edit, Search, Globe, Image as ImageIcon, Eye, Images } from 'lucide-react';
+import { Plus, Trash, Edit, Search, Globe, Image as ImageIcon, Eye } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import TerritoryForm from '../components/TerritoryForm';
 import TerritoryPreview from '../components/TerritoryPreview';
@@ -134,7 +134,7 @@ const TerritoriesManager: React.FC = () => {
                     className="p-2 text-gray-400 hover:text-indigo-600 focus:outline-none focus:text-indigo-600 transition-colors"
                     title="Ver imagens relacionadas"
                   >
-                    <Images size={18} />
+                    <ImageIcon size={18} />
                   </button>
                   <button
                     onClick={(e) => {
