@@ -1,85 +1,69 @@
-import React, { useState } from 'react';
-import { X, Upload, Image as ImageIcon, UserPlus, Users, Trash, Eye, XCircle } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
-import { v4 as uuidv4 } from 'uuid';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Upload, Image as ImageIcon } from 'lucide-react';
+import { Territory } from '../context/AppContext';
 
-interface TerritoryImagesManagerProps {
-  territory: Territory;
+interface TerritoryFormProps {
+  territory: Territory | null;
   onClose: () => void;
   onSave: (territory: Territory) => void;
 }
 
-const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
-  territory,
-  onClose,
-  onSave
-}) => {
-  const { people, groups } = useAppContext();
-  const [images, setImages] = useState<TerritoryImage[]>(territory.images || []);
-  const [selectedImage, setSelectedImage] = useState<TerritoryImage | null>(null);
-  const [previewImage, setPreviewImage] = useState<TerritoryImage | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+const TerritoryForm: React.FC<TerritoryFormProps> = ({ territory, onClose, onSave }) => {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (territory) {
+      setName(territory.name);
+      setDescription(territory.description || '');
+      setImageUrl(territory.image_url || '');
+      setPreviewImage(territory.image_url || null);
+    }
+  }, [territory]);
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!name.trim()) {
+      newErrors.name = 'Nome do território é obrigatório';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
     const file = e.target.files?.[0];
     if (file) {
       try {
         const reader = new FileReader();
         reader.onloadend = () => {
-          const newImage: TerritoryImage = {
-            id: uuidv4(),
-            url: reader.result as string,
-            assignedGroups: [],
-            assignedPeople: [],
-            createdAt: new Date().toISOString()
-          };
-          setImages(prev => [...prev, newImage]);
+          const base64String = reader.result as string;
+          setPreviewImage(base64String);
+          setImageUrl(base64String);
         };
         reader.readAsDataURL(file);
       } catch (error) {
-        setUploadError('Erro ao fazer upload da imagem');
+        console.error('Error processing image:', error);
       }
     }
   };
 
-  const handleRemoveImage = (imageId: string) => {
-    setImages(prev => prev.filter(img => img.id !== imageId));
-    if (selectedImage?.id === imageId) {
-      setSelectedImage(null);
-    }
-    if (previewImage?.id === imageId) {
-      setPreviewImage(null);
-    }
-  };
-
-  const handleAssignGroup = (imageId: string, groupId: string) => {
-    setImages(prev => prev.map(img => {
-      if (img.id === imageId) {
-        const assignedGroups = img.assignedGroups.includes(groupId)
-          ? img.assignedGroups.filter(id => id !== groupId)
-          : [...img.assignedGroups, groupId];
-        return { ...img, assignedGroups };
-      }
-      return img;
-    }));
-  };
-
-  const handleAssignPerson = (imageId: string, personId: string) => {
-    setImages(prev => prev.map(img => {
-      if (img.id === imageId) {
-        const assignedPeople = img.assignedPeople.includes(personId)
-          ? img.assignedPeople.filter(id => id !== personId)
-          : [...img.assignedPeople, personId];
-        return { ...img, assignedPeople };
-      }
-      return img;
-    }));
-  };
-
-  const handleSave = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validate()) return;
+    
     onSave({
-      ...territory,
-      images
+      id: territory ? territory.id : Date.now().toString(),
+      name: name.trim(),
+      description: description.trim() || undefined,
+      image_url: imageUrl || undefined
     });
   };
 
@@ -92,13 +76,13 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
 
         <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div className="sm:flex sm:items-start">
               <div className="w-full">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg leading-6 font-medium text-gray-900">
-                    Gerenciar Imagens: {territory.name}
+                    {territory ? 'Editar Território' : 'Adicionar Novo Território'}
                   </h3>
                   <button
                     onClick={onClose}
@@ -107,90 +91,95 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                     <X size={20} />
                   </button>
                 </div>
-
-                {/* Upload section */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Adicionar Nova Imagem
-                  </label>
-                  <div className="mt-1 flex justify-center px-4 py-3 border-2 border-gray-300 border-dashed rounded-md">
-                    <div className="space-y-1 text-center">
-                      <Upload className="mx-auto h-8 w-8 text-gray-400" />
-                      <div className="flex text-sm text-gray-600">
-                        <label
-                          htmlFor="image-upload"
-                          className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
+                
+                <form onSubmit={handleSubmit}>
+                  {/* Image upload */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-center">
+                      <div className="relative">
+                        <div 
+                          className="w-full h-48 bg-gray-200 flex items-center justify-center overflow-hidden cursor-pointer rounded-lg"
+                          onClick={() => fileInputRef.current?.click()}
                         >
-                          <span>Upload uma imagem</span>
-                          <input
-                            id="image-upload"
-                            name="image-upload"
-                            type="file"
-                            className="sr-only"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                          />
-                        </label>
+                          {previewImage ? (
+                            <img 
+                              src={previewImage} 
+                              alt="Preview" 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="text-center">
+                              <ImageIcon className="h-12 w-12 text-gray-400 mx-auto" />
+                              <p className="text-sm text-gray-500 mt-2">Clique para fazer upload da imagem</p>
+                              <p className="text-xs text-gray-400">Recomendado: 1200x800px</p>
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleImageChange}
+                        />
                       </div>
-                      <p className="text-xs text-gray-500">PNG, JPG até 10MB</p>
                     </div>
                   </div>
-                  {uploadError && (
-                    <p className="mt-2 text-sm text-red-600">{uploadError}</p>
-                  )}
-                </div>
 
-                {/* Images grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
-                  {images.map(image => (
-                    <div
-                      key={image.id}
-                      className={`relative rounded-lg overflow-hidden border-2 ${
-                        selectedImage?.id === image.id ? 'border-indigo-500' : 'border-transparent'
-                      }`}
-                      onClick={() => setSelectedImage(image)}
+                  <div className="mb-4">
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                      Nome do Território <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className={`mt-1 block w-full px-3 py-2 border ${
+                        errors.name ? 'border-red-300' : 'border-gray-300'
+                      } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                    />
+                    {errors.name && (
+                      <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                    )}
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                      Descrição
+                    </label>
+                    <textarea
+                      id="description"
+                      rows={3}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  
+                  <div className="sm:flex sm:flex-row-reverse mt-5">
+                    <button
+                      type="submit"
+                      className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
                     >
-                      <img
-                        src={image.url}
-                        alt=""
-                        className="w-full h-32 object-cover"
-                      />
-                      <div className="absolute top-1 right-1 flex space-x-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setPreviewImage(image);
-                          }}
-                          className="p-1 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-colors"
-                          title="Visualizar imagem"
-                        >
-                          <Eye size={14} />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveImage(image.id);
-                          }}
-                          className="p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                          title="Remover imagem"
-                        >
-                          <Trash size={14} />
-                        </button>
-                      </div>
-                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 text-xs">
-                        <div className="flex items-center space-x-2">
-                          <Users size={12} />
-                          <span>{image.assignedGroups.length}</span>
-                          <UserPlus size={12} />
-                          <span>{image.assignedPeople.length}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      {territory ? 'Atualizar' : 'Adicionar'} Território
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-                {/* Assignments section */}
-                {selectedImage && (
-                  <div className="border-t border-gray-200 pt-4">
-                    <h4 className="text-lg font-medium text-gray-900 mb-4">
-                      Atribuições da Imagem
+export default TerritoryForm;
