@@ -27,7 +27,7 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
         const reader = new FileReader();
         reader.onloadend = () => {
           const newImage: TerritoryImage = {
-            id: uuidv4(), // Using UUID instead of timestamp
+            id: uuidv4(),
             url: reader.result as string,
             assignedGroups: [],
             assignedPeople: [],
@@ -81,7 +81,6 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
       ...territory,
       images
     });
-    onClose();
   };
 
   return (
@@ -204,14 +203,16 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                         {groups.map(group => (
                           <label
                             key={group.id}
-                            className="flex items-center p-2 rounded-md border border-gray-200 hover:bg-gray-50"
+                            className="relative flex items-center p-2 rounded-md border border-gray-200 hover:bg-gray-50 cursor-pointer"
                           >
-                            <input
-                              type="checkbox"
-                              checked={selectedImage.assignedGroups.includes(group.id)}
-                              onChange={() => handleAssignGroup(selectedImage.id, group.id)}
-                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                            />
+                            <div className="flex items-center h-5">
+                              <input
+                                type="checkbox"
+                                checked={selectedImage.assignedGroups.includes(group.id)}
+                                onChange={() => handleAssignGroup(selectedImage.id, group.id)}
+                                className="appearance-none h-4 w-4 border border-gray-300 rounded bg-white checked:bg-indigo-600 checked:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+                              />
+                            </div>
                             <span className="ml-2 text-sm text-gray-900">{group.name}</span>
                           </label>
                         ))}
@@ -225,14 +226,16 @@ const TerritoryImagesManager: React.FC<TerritoryImagesManagerProps> = ({
                         {people.map(person => (
                           <label
                             key={person.id}
-                            className="flex items-center p-2 rounded-md border border-gray-200 hover:bg-gray-50"
+                            className="relative flex items-center p-2 rounded-md border border-gray-200 hover:bg-gray-50 cursor-pointer"
                           >
-                            <input
-                              type="checkbox"
-                              checked={selectedImage.assignedPeople.includes(person.id)}
-                              onChange={() => handleAssignPerson(selectedImage.id, person.id)}
-                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                            />
+                            <div className="flex items-center h-5">
+                              <input
+                                type="checkbox"
+                                checked={selectedImage.assignedPeople.includes(person.id)}
+                                onChange={() => handleAssignPerson(selectedImage.id, person.id)}
+                                className="appearance-none h-4 w-4 border border-gray-300 rounded bg-white checked:bg-indigo-600 checked:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+                              />
+                            </div>
                             <span className="ml-2 text-sm text-gray-900">{person.name}</span>
                           </label>
                         ))}
